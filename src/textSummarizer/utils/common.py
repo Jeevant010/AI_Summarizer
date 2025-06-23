@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 @ensure_annotations
-def read_yam(path_to_yaml: Path) -> ConfigBox:
+def read_yaml(path_to_yaml: Path) -> ConfigBox:
     """_summary_
     Read YAML file and convert it into a ConfigBox object.
 
@@ -37,7 +37,7 @@ def read_yam(path_to_yaml: Path) -> ConfigBox:
     
 
 @ensure_annotations
-def create_directory(path_to_directories: list, verbose=True):
+def create_directories(path_to_directories: list, verbose=True):
     """
     create list of directories 
     
