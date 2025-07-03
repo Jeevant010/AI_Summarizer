@@ -3,7 +3,8 @@ from textSummarizer.utils.common import read_yaml, create_directories
 from textSummarizer.entity import (DataIngestionConfig,
                                    DataValidationConfig,
                                    DataTransformationConfig,
-                                   ModelTrainerConfig)
+                                   ModelTrainerConfig,
+                                   ModelEvaluationConfig)
 
 
 class ConfigurationManager:
@@ -24,10 +25,10 @@ class ConfigurationManager:
         create_directories([config.root_dir])
         
         data_ingestion_config = DataIngestionConfig(
-            root_dir = config.root_dir,
+            root_dir = Path(config.root_dir),
             source_URL = config.source_URL,
-            local_data_file = config.local_data_file,
-            unzip_dir = config.unzip_dir,
+            local_data_file = Path(config.local_data_file),
+            unzip_dir = Path(config.unzip_dir),
         )
         
         return data_ingestion_config
@@ -53,9 +54,9 @@ class ConfigurationManager:
         create_directories([config.root_dir])
         
         data_transformation_config = DataTransformationConfig(
-            root_dir=config.root_dir,
-            data_path=config.data_path,
-            tokenizer_name=config.tokenizer_name,
+            root_dir=Path(config.root_dir),
+            data_path=Path(config.data_path),
+            tokenizer_name=config.tokenizer_name,  # if this is a path, use Path(); if just a model name, keep as str
         )
         
         return data_transformation_config
@@ -83,3 +84,20 @@ class ConfigurationManager:
         )
         
         return model_trainer_config
+    
+    
+    def get_model_evaluation_config(self) -> ModelEvaluationConfig:
+        config = self.config.model_evaluation
+
+        create_directories([config.root_dir])
+
+        model_evaluation_config = ModelEvaluationConfig(
+            root_dir=config.root_dir,
+            data_path=config.data_path,
+            model_path = config.model_path,
+            tokenizer_path = config.tokenizer_path,
+            metric_file_name = config.metric_file_name
+           
+        )
+
+        return model_evaluation_config
