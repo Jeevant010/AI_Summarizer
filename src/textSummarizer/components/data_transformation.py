@@ -7,7 +7,12 @@ from textSummarizer.entity import DataTransformationConfig
 class DataTransformation:
     def __init__(self, config: DataTransformationConfig):
         self.config = config
-        self.tokenizer = AutoTokenizer.from_pretrained(self.config.tokenizer_name)
+        # choose tokenizer checkpoint: prefer dev_model when dev_run is enabled
+        tokenizer_checkpoint = self.config.tokenizer_name
+        if getattr(self.config, 'dev_run', False) and getattr(self.config, 'dev_model', None):
+            tokenizer_checkpoint = self.config.dev_model
+
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_checkpoint)
         
     def convert_examples_to_features(self, example_batch):
         input_encodings = self.tokenizer(
@@ -31,6 +36,13 @@ class DataTransformation:
         dataset_samsum = load_from_disk(str(self.config.data_path))
         logger.info("Tokenizing dataset...")
         dataset_samsum_pt = dataset_samsum.map(self.convert_examples_to_features, batched=True)
+        
+        # ensure labels are correctly formatted for seq2seq Trainer
+        def rename_for_trainer(batch):
+            # already returns 'labels' in convert_examples_to_features; keep
+            return batch
+
+        dataset_samsum_pt = dataset_samsum_pt.map(rename_for_trainer, batched=True)
         save_path = self.config.root_dir / "samsum_dataset"
         os.makedirs(save_path, exist_ok=True)
         logger.info(f"Saving processed dataset to {save_path}")

@@ -1,10 +1,9 @@
-import os
 from pathlib import Path
 import logging
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s]:(message)s:')
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s]: %(message)s")
 
-project_name = "testSummarizer"
+project_name = "textSummarizer"
 
 list_of_files = [
     ".github/workflows/.gitkeep",
@@ -25,22 +24,20 @@ list_of_files = [
     "Dockerfile",
     "requirements.txt",
     "setup.py",
-    "research/trails.ipynb"
-    
+    "research/trails.ipynb",
 ]
 
 for filepath in list_of_files:
-    filepath = Path(filepath)
-    filedir, filename = os.path.split(filepath)
-    
-    if filedir != "":
-        os.makedirs(filedir, exist_ok=True)
-        logging.info(f"Creating directry:{filepath} for the file {filepath}")
-        
-    if (not os.path.exists(filepath)) or (os.path.getsize(filepath) == 0):
-        with open(filepath, 'w') as f:
-            pass
-            logging.info(f"Creating empty file: {filepath}")
-            
-    else :
-        logging.info(f"{filename} is already exists.")
+    fp = Path(filepath)
+    filedir = fp.parent
+    filename = fp.name
+
+    if filedir and str(filedir) != ".":
+        filedir.mkdir(parents=True, exist_ok=True)
+        logging.info(f"Creating directory: {filedir} for the file {filename}")
+
+    if not fp.exists() or fp.stat().st_size == 0:
+        fp.touch(exist_ok=True)
+        logging.info(f"Created empty file: {fp}")
+    else:
+        logging.info(f"{filename} already exists.")

@@ -2,12 +2,10 @@ import os
 from box.exceptions import BoxValueError
 import yaml
 from textSummarizer.logging import logger
-from ensure import ensure_annotations
 from box import ConfigBox
 from pathlib import Path
 from typing import Any
 
-@ensure_annotations
 def read_yaml(path_to_yaml: Path) -> ConfigBox:
     """_summary_
     Read YAML file and convert it into a ConfigBox object.
@@ -36,8 +34,7 @@ def read_yaml(path_to_yaml: Path) -> ConfigBox:
         raise e
     
 
-@ensure_annotations
-def create_directories(path_to_directories: list, verbose=True):
+def create_directories(path_to_directories: list, verbose: bool = True) -> None:
     """
     create list of directories 
     
@@ -50,8 +47,7 @@ def create_directories(path_to_directories: list, verbose=True):
         if verbose:
             logger.info(f"created directory at path : {path}")
             
-@ensure_annotations
-def get_size(path: Path) ->str:
+def get_size(path: Path) -> str:
     """get size of file in kbs
 
     Args:

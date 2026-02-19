@@ -9,7 +9,7 @@ class DataValidation:
     def validate_all_files_exists(self) -> bool:
         try:
             # Use config for dataset directory
-            dataset_dir = self.config.root_dir
+            dataset_dir = self.config.data_dir
             all_files = set(os.listdir(dataset_dir))
 
             required_files = set(self.config.ALL_REQUIRED_FILES)

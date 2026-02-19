@@ -1,8 +1,8 @@
 import setuptools
 
-with open("README.md" , "r" , encoding="utf-8") as f:
+with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
-    
+
 __version__ = "0.0.0"
 
 REPO_NAME = "AI_Summarizer"
@@ -17,11 +17,18 @@ setuptools.setup(
     author_email=AUTHOR_EMAIL,
     description="A Small python package for Text NLP App",
     long_description=long_description,
-    long_description_content="text/markdown",
+    long_description_content_type="text/markdown",
     url=f"https://github.com/{AUTHOR_USER_NAME}/{REPO_NAME}",
     project_urls={
         "Bug Tracker": f"https://github.com/{AUTHOR_USER_NAME}/{REPO_NAME}/issues",
     },
     package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src")
+    packages=setuptools.find_packages(where="src"),
+    python_requires=">=3.11, <3.14",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
 )

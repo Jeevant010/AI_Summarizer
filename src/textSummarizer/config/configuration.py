@@ -40,9 +40,10 @@ class ConfigurationManager:
         create_directories([config.root_dir])
         
         data_validation_config = DataValidationConfig(
-            root_dir=config.root_dir,
+            root_dir=Path(config.root_dir),
             STATUS_FILE=config.STATUS_FILE,
             ALL_REQUIRED_FILES=config.ALL_REQUIRED_FILES,
+            data_dir=Path(config.data_dir),
         )
         
         return data_validation_config
@@ -57,6 +58,8 @@ class ConfigurationManager:
             root_dir=Path(config.root_dir),
             data_path=Path(config.data_path),
             tokenizer_name=config.tokenizer_name,  # if this is a path, use Path(); if just a model name, keep as str
+            dev_run=getattr(config, 'dev_run', False),
+            dev_model=getattr(config, 'dev_model', None),
         )
         
         return data_transformation_config
@@ -77,11 +80,33 @@ class ConfigurationManager:
             per_device_train_batch_size=params.per_device_train_batch_size,
             weight_decay=params.weight_decay,
             logging_steps=params.logging_steps,
-            evaluation_strategy=params.evaluation_strategy,
-            eval_steps=params.evaluation_strategy,
+            eval_strategy=params.eval_strategy,
+            eval_steps=params.eval_steps,
             save_steps=params.save_steps,
             gradient_accumulation_steps=params.gradient_accumulation_steps
         )
+
+        # Optional dev quick-train settings (not all configs will have these)
+        try:
+            model_trainer_config = ModelTrainerConfig(
+                root_dir=Path(config.root_dir),
+                data_path=Path(config.data_path),
+                model_ckpt=config.model_ckpt,
+                num_train_epochs=params.num_train_epochs,
+                warmup_steps=params.warmup_steps,
+                per_device_train_batch_size=params.per_device_train_batch_size,
+                weight_decay=params.weight_decay,
+                logging_steps=params.logging_steps,
+                eval_strategy=params.eval_strategy,
+                eval_steps=params.eval_steps,
+                save_steps=params.save_steps,
+                gradient_accumulation_steps=params.gradient_accumulation_steps,
+                dev_run=getattr(config, 'dev_run', False),
+                dev_model=getattr(config, 'dev_model', None),
+                dev_subset=int(getattr(config, 'dev_subset', 0))
+            )
+        except Exception:
+            pass
         
         return model_trainer_config
     

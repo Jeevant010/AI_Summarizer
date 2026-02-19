@@ -1,15 +1,12 @@
 from fastapi import FastAPI
 import uvicorn
+import subprocess
 import sys
-import os
-from fastapi.templating import Jinja2Templates
 from starlette.responses import RedirectResponse
 from fastapi.responses import Response
 from textSummarizer.pipeline.prediction import PredictionPipeline
 
-txt:str = "What is Text Summarization?"
-
-app = FastAPI()
+app = FastAPI(title="AI Text Summarizer", version="1.0.0")
 
 @app.get("/", tags=["authentication"] )
 async def index():
@@ -19,10 +16,17 @@ async def index():
 @app.get("/train")
 async def training():
     try:
-        os.system("python main.py")
+        result = subprocess.run(
+            [sys.executable, "main.py"],
+            capture_output=True, text=True, timeout=7200
+        )
+        if result.returncode != 0:
+            return Response(f"Training failed!\n{result.stderr}", status_code=500)
         return Response("Training completed successfully!")
+    except subprocess.TimeoutExpired:
+        return Response("Training timed out!", status_code=504)
     except Exception as e:
-        return Response(f"Error Occurred! {e}")
+        return Response(f"Error Occurred! {e}", status_code=500)
     
     
 @app.post("/predict")

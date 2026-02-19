@@ -1,21 +1,26 @@
-transformers
-transformers[sentencepiece]
-dataset
-sacrebleu
-py7zr
-pandas
-nltk
-tqdm
-PyYAML
-matplotlib
-torch
-notebook
-boto3
-mypy-boto3-s3
+transformers>=5.0.0
+transformers[torch]>=5.0.0
+sentencepiece>=0.1.98
+datasets>=2.5.0
+evaluate>=0.4.0
+rouge-score>=0.1.2
+sacrebleu>=2.0.0
+py7zr>=0.19.0
+pandas>=1.5.0
+nltk>=3.8.0
+tqdm>=4.60.0
+PyYAML>=6.0
+matplotlib>=3.6.0
+# NOTE: pin `torch` per target machine; this is a minimum
+torch>=2.0.0
+accelerate>=0.26.0
+notebook>=6.4.0
+boto3>=1.26.0
+mypy-boto3-s3>=1.25.0
 python-box==6.0.2
-ensure==1.0.2
-fastapi==0.78.0
-uvicorn==0.18.3
-Jinja2==3.1.2
-rouge-score
+fastapi>=0.95.0
+uvicorn>=0.22.0
+Jinja2>=3.1.2
+python-multipart>=0.0.6
+# Editable install of local package
 -e .
