@@ -72,18 +72,18 @@ class ConfigurationManager:
         create_directories([config.root_dir])
         
         model_trainer_config = ModelTrainerConfig(
-            root_dir=config.root_dir,
-            data_path=config.data_path,
-            model_ckpt=config.model_ckpt,
-            num_train_epochs=params.num_train_epochs,
-            warmup_steps=params.warmup_steps,
-            per_device_train_batch_size=params.per_device_train_batch_size,
-            weight_decay=params.weight_decay,
-            logging_steps=params.logging_steps,
-            eval_strategy=params.eval_strategy,
-            eval_steps=params.eval_steps,
-            save_steps=params.save_steps,
-            gradient_accumulation_steps=params.gradient_accumulation_steps
+            root_dir=Path(config.root_dir),
+            data_path=Path(config.data_path),
+            model_ckpt=str(config.model_ckpt),
+            num_train_epochs=int(params.num_train_epochs),
+            warmup_steps=int(params.warmup_steps),
+            per_device_train_batch_size=int(params.per_device_train_batch_size),
+            weight_decay=float(params.weight_decay),
+            logging_steps=int(params.logging_steps),
+            eval_strategy=str(params.eval_strategy),
+            eval_steps=int(params.eval_steps),
+            save_steps=int(float(params.save_steps)),
+            gradient_accumulation_steps=int(params.gradient_accumulation_steps)
         )
 
         # Optional dev quick-train settings (not all configs will have these)
@@ -91,16 +91,16 @@ class ConfigurationManager:
             model_trainer_config = ModelTrainerConfig(
                 root_dir=Path(config.root_dir),
                 data_path=Path(config.data_path),
-                model_ckpt=config.model_ckpt,
-                num_train_epochs=params.num_train_epochs,
-                warmup_steps=params.warmup_steps,
-                per_device_train_batch_size=params.per_device_train_batch_size,
-                weight_decay=params.weight_decay,
-                logging_steps=params.logging_steps,
-                eval_strategy=params.eval_strategy,
-                eval_steps=params.eval_steps,
-                save_steps=params.save_steps,
-                gradient_accumulation_steps=params.gradient_accumulation_steps,
+                model_ckpt=str(config.model_ckpt),
+                num_train_epochs=int(params.num_train_epochs),
+                warmup_steps=int(params.warmup_steps),
+                per_device_train_batch_size=int(params.per_device_train_batch_size),
+                weight_decay=float(params.weight_decay),
+                logging_steps=int(params.logging_steps),
+                eval_strategy=str(params.eval_strategy),
+                eval_steps=int(params.eval_steps),
+                save_steps=int(float(params.save_steps)),
+                gradient_accumulation_steps=int(params.gradient_accumulation_steps),
                 dev_run=getattr(config, 'dev_run', False),
                 dev_model=getattr(config, 'dev_model', None),
                 dev_subset=int(getattr(config, 'dev_subset', 0))

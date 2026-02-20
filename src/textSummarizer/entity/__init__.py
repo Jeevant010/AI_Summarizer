@@ -32,7 +32,7 @@ class DataTransformationConfig:
 class ModelTrainerConfig:
     root_dir: Path
     data_path: Path
-    model_ckpt: Path
+    model_ckpt: str
     num_train_epochs: int
     warmup_steps: int
     per_device_train_batch_size: int
