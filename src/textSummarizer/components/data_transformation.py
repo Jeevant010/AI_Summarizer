@@ -32,6 +32,14 @@ class DataTransformation:
         }
         
     def convert(self):
+        save_path = self.config.root_dir / "samsum_dataset"
+        
+        # Temporarily disabled skip check to force transformation
+        # # Check if processed dataset already exists
+        # if save_path.exists() and (save_path / "dataset_dict.json").exists():
+        #     logger.info(f"Processed dataset already exists at {save_path}. Skipping transformation.")
+        #     return
+            
         logger.info(f"Loading dataset from {self.config.data_path}")
         dataset_samsum = load_from_disk(str(self.config.data_path))
         logger.info("Tokenizing dataset...")
@@ -43,7 +51,9 @@ class DataTransformation:
             return batch
 
         dataset_samsum_pt = dataset_samsum_pt.map(rename_for_trainer, batched=True)
-        save_path = self.config.root_dir / "samsum_dataset"
         os.makedirs(save_path, exist_ok=True)
         logger.info(f"Saving processed dataset to {save_path}")
-        dataset_samsum_pt.save_to_disk(str(save_path))
+        # Use absolute path with proper Windows formatting to handle spaces in path
+        abs_save_path = os.path.abspath(str(save_path))
+        # Disable multiprocessing on Windows to avoid path issues with spaces
+        dataset_samsum_pt.save_to_disk(abs_save_path, num_proc=1)

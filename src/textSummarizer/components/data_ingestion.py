@@ -31,6 +31,13 @@ class DataIngestion:
         try:
             unzip_path = self.config.unzip_dir
             os.makedirs(unzip_path, exist_ok=True)
+            
+            # Check if data already extracted (look for samsum_dataset folder)
+            expected_data_dir = Path(unzip_path) / "samsum_dataset"
+            if expected_data_dir.exists():
+                logger.info(f"Dataset already extracted at {expected_data_dir}. Skipping extraction.")
+                return
+            
             logger.info(f"Extracting {self.config.local_data_file} to {unzip_path}")
             with zipfile.ZipFile(self.config.local_data_file, 'r') as zip_ref:
                 zip_ref.extractall(unzip_path)
