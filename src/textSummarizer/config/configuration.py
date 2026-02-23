@@ -121,8 +121,8 @@ class ConfigurationManager:
             data_path=config.data_path,
             model_path = config.model_path,
             tokenizer_path = config.tokenizer_path,
-            metric_file_name = config.metric_file_name
-           
+            metric_file_name = config.metric_file_name,
+            hub_model_id = getattr(config, "hub_model_id", "google/pegasus-cnn_dailymail"),
         )
 
         return model_evaluation_config

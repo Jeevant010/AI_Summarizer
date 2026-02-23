@@ -59,9 +59,11 @@ class ModelTrainer:
             save_steps=int(float(getattr(self.config, "save_steps", 1e6))),
             gradient_accumulation_steps=int(self.config.gradient_accumulation_steps),
             fp16=torch.cuda.is_available(),
-            dataloader_num_workers=int(getattr(self.config, "dataloader_num_workers", 4)),
-            save_total_limit=int(getattr(self.config, "save_total_limit", 3)),
+            dataloader_num_workers=int(getattr(self.config, "dataloader_num_workers", 0)),
+            save_total_limit=int(getattr(self.config, "save_total_limit", 1)),
             load_best_model_at_end=bool(getattr(self.config, "load_best_model_at_end", False)),
+            # Adafactor uses ~4x less RAM than Adam — essential for Pegasus on CPU
+            optim="adafactor",
         )
 
         trainer = Trainer(

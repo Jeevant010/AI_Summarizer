@@ -27,7 +27,7 @@ COPY app.py      .
 COPY main.py     .
 
 # ── Copy trained model artifacts ──────────────────────────────────────────────
-# Only the inference artefacts are needed at runtime – skip training data.
+# Uncomment after training is complete and artifacts are committed with Git LFS.
 COPY artifacts/model_trainer/pegasus-samsum-model/ \
         ./artifacts/model_trainer/pegasus-samsum-model/
 COPY artifacts/model_trainer/tokenizer/ \

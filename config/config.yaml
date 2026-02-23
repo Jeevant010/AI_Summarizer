@@ -19,19 +19,17 @@ data_transformation:
   root_dir: artifacts/data_transformation
   data_path: artifacts/data_ingestion/samsum_dataset
   tokenizer_name: google/pegasus-cnn_dailymail
-  # Dev quick-run tokenizer override (use same model as trainer to avoid token mismatch)
-  dev_run: true
-  dev_model: t5-small
+  dev_run: false
+  dev_model: null
 
 
 model_trainer:
   root_dir: artifacts/model_trainer
   data_path: artifacts/data_transformation/samsum_dataset
   model_ckpt: google/pegasus-cnn_dailymail
-  # Development quick-train options
-  dev_run: true
-  dev_model: t5-small
-  dev_subset: 64
+  dev_run: false
+  dev_model: null
+  dev_subset: 0
 
 
 model_evaluation:
@@ -40,3 +38,7 @@ model_evaluation:
   model_path: artifacts/model_trainer/pegasus-samsum-model
   tokenizer_path: artifacts/model_trainer/tokenizer
   metric_file_name: artifacts/model_evaluation/metrics.csv
+  # Fallback HuggingFace Hub model used when local fine-tuned model is absent
+  # (e.g. on HuggingFace Spaces before training). Replace with your own
+  # fine-tuned model ID once you push it to the Hub.
+  hub_model_id: google/pegasus-cnn_dailymail

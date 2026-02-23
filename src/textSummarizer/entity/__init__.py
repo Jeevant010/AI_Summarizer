@@ -55,3 +55,5 @@ class ModelEvaluationConfig:
     model_path: Path
     tokenizer_path: Path
     metric_file_name: Path
+    # Hub model ID used as fallback when the local fine-tuned model is absent
+    hub_model_id: str = "google/pegasus-cnn_dailymail"

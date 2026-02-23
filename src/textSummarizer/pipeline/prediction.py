@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from textSummarizer.config.configuration import ConfigurationManager
 from textSummarizer.logging import logger
 from transformers import AutoTokenizer
@@ -14,13 +16,41 @@ class PredictionPipeline:
         self._pipe = None           # lazy-loaded / pre-warmed via load_model()
 
     # ------------------------------------------------------------------
+    def _resolve_model_source(self):
+        """Return (model_source, tokenizer_source) as either absolute Path
+        objects (local fine-tuned model) or Hub model-ID strings (fallback).
+
+        Using Path objects for local paths is critical on Windows: newer
+        huggingface_hub versions validate strings as repo-IDs and reject
+        Windows paths that contain backslashes, spaces, or drive letters.
+        Path objects are recognised as os.PathLike and bypass that check.
+        """
+        tokenizer_path = Path(self.config.tokenizer_path).resolve()
+        model_path     = Path(self.config.model_path).resolve()
+
+        if tokenizer_path.is_dir() and model_path.is_dir():
+            logger.info("Loading local fine-tuned model from %s", model_path)
+            return model_path, tokenizer_path
+
+        # Local model not present – fall back to the Hub checkpoint so the
+        # app still starts on HuggingFace Spaces or a fresh clone.
+        hub_id = self.config.hub_model_id
+        logger.warning(
+            "Local model not found at %s. "
+            "Falling back to HuggingFace Hub model '%s'. "
+            "Run the training pipeline (python main.py) to use the fine-tuned model.",
+            model_path, hub_id,
+        )
+        return hub_id, hub_id
+
+    # ------------------------------------------------------------------
     def load_model(self) -> None:
         """Load the tokenizer and model into memory (call once at startup)."""
-        logger.info("Loading summarisation model from %s", self.config.model_path)
-        tokenizer = AutoTokenizer.from_pretrained(str(self.config.tokenizer_path))
+        model_source, tokenizer_source = self._resolve_model_source()
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_source)
         self._pipe = hf_pipeline(
             "summarization",
-            model=str(self.config.model_path),
+            model=model_source,
             tokenizer=tokenizer,
         )
         logger.info("Model loaded and ready.")
