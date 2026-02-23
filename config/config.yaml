@@ -27,9 +27,13 @@ model_trainer:
   root_dir: artifacts/model_trainer
   data_path: artifacts/data_transformation/samsum_dataset
   model_ckpt: google/pegasus-cnn_dailymail
-  dev_run: false
-  dev_model: null
-  dev_subset: 0
+  # ── Quick smoke-test mode ─────────────────────────────────────────────────
+  # Set dev_run: true to train on a tiny slice of data so you can verify the
+  # full pipeline end-to-end in minutes instead of hours.
+  # Switch back to false (and dev_subset: 0) for a real training run.
+  dev_run: true
+  dev_model: null          # null = use model_ckpt above
+  dev_subset: 40           # 40 train samples, 10 validation samples
 
 
 model_evaluation:
