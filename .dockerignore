@@ -1,0 +1,43 @@
+# ── Version control ───────────────────────────────────────────────────────────
+.git
+.gitignore
+
+# ── Python bytecode ───────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Notebooks / research ──────────────────────────────────────────────────────
+research/
+*.ipynb
+.ipynb_checkpoints/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Training data (large – not needed at inference time) ──────────────────────
+artifacts/data_ingestion/
+artifacts/data_transformation/
+artifacts/data_validation/
+
+# ── Intermediate training checkpoints (only final model is needed) ────────────
+artifacts/model_trainer/checkpoint-*/
+
+# ── Evaluation outputs (optional, not needed to serve) ────────────────────────
+artifacts/model_evaluation/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+.env
+.env.*
+*.DS_Store
+Thumbs.db
