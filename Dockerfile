@@ -53,15 +53,7 @@ EXPOSE 7860
 # Returns 200 once model is loaded, 503 while still warming up — both are
 # acceptable to the orchestrator (non-5xx codes keep the container alive).
 HEALTHCHECK --interval=20s --timeout=10s --start-period=120s --retries=5 \
-    CMD python -c "
-import urllib.request, sys
-try:
-    r = urllib.request.urlopen('http://localhost:7860/health', timeout=8)
-    # 200 = ready, 503 = still loading — both mean the server is alive
-    sys.exit(0 if r.status in (200, 503) else 1)
-except Exception:
-    sys.exit(1)
-"
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7860/', timeout=8)"]
 
 # ── Start server ──────────────────────────────────────────────────────────────
 CMD ["python", "app.py"]
