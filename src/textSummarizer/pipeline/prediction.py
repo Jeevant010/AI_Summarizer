@@ -3,6 +3,7 @@ from pathlib import Path
 from textSummarizer.config.configuration import ConfigurationManager
 from textSummarizer.logging import logger
 from transformers import AutoTokenizer
+from transformers import AutoModelForSeq2SeqLM
 from transformers import pipeline as hf_pipeline
 
 
@@ -14,6 +15,43 @@ class PredictionPipeline:
     def __init__(self):
         self.config = ConfigurationManager().get_model_evaluation_config()
         self._pipe = None           # lazy-loaded / pre-warmed via load_model()
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _is_hub_source(source) -> bool:
+        return isinstance(source, str)
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _is_cache_corruption_error(message: str) -> bool:
+        lowered = message.lower()
+        return (
+            "spiece.model" in lowered
+            or "error parsing line" in lowered
+            or "sentencepiece" in lowered
+        )
+
+    # ------------------------------------------------------------------
+    def _build_pipeline(self, model_source, tokenizer_source, force_download: bool = False):
+        tokenizer_kwargs = {}
+        model_kwargs = {}
+
+        if force_download:
+            # force_download is meaningful for Hub IDs; for local paths we keep
+            # default loading behaviour.
+            if self._is_hub_source(tokenizer_source):
+                tokenizer_kwargs["force_download"] = True
+            if self._is_hub_source(model_source):
+                model_kwargs["force_download"] = True
+
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_source, **tokenizer_kwargs)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_source, **model_kwargs)
+
+        return hf_pipeline(
+            "summarization",
+            model=model,
+            tokenizer=tokenizer,
+        )
 
     # ------------------------------------------------------------------
     def _resolve_model_source(self):
@@ -47,12 +85,29 @@ class PredictionPipeline:
     def load_model(self) -> None:
         """Load the tokenizer and model into memory (call once at startup)."""
         model_source, tokenizer_source = self._resolve_model_source()
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_source)
-        self._pipe = hf_pipeline(
-            "summarization",
-            model=model_source,
-            tokenizer=tokenizer,
-        )
+        try:
+            self._pipe = self._build_pipeline(model_source, tokenizer_source)
+        except Exception as exc:
+            message = str(exc)
+            should_retry = (
+                self._is_hub_source(model_source)
+                and self._is_hub_source(tokenizer_source)
+                and self._is_cache_corruption_error(message)
+            )
+
+            if not should_retry:
+                raise
+
+            logger.warning(
+                "Tokenizer/model cache appears corrupted (%s). Retrying with force_download=True.",
+                message,
+            )
+            self._pipe = self._build_pipeline(
+                model_source,
+                tokenizer_source,
+                force_download=True,
+            )
+
         logger.info("Model loaded and ready.")
 
     # ------------------------------------------------------------------
