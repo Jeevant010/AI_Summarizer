@@ -5,10 +5,42 @@ from pydantic import BaseModel
 import uvicorn
 import subprocess
 import threading
+import time
 import sys
 import os
+import shutil
+from pathlib import Path
 from starlette.responses import RedirectResponse
 from fastapi.responses import Response
+
+
+def _configure_hf_cache() -> None:
+    """Configure Hugging Face cache directory before any model imports.
+
+    On HuggingFace Spaces, `/data` is persistent between restarts and is safer
+    than `/tmp` for large model artifacts.
+    """
+    preferred_cache_root = Path("/data/cache")
+    fallback_cache_root = Path("/tmp/hf_cache")
+    cache_root = preferred_cache_root if preferred_cache_root.parent.exists() else fallback_cache_root
+
+    cache_root.mkdir(parents=True, exist_ok=True)
+    (cache_root / "hub").mkdir(parents=True, exist_ok=True)
+
+    os.environ["HF_HOME"] = str(cache_root)
+    os.environ["TRANSFORMERS_CACHE"] = str(cache_root)
+    os.environ["HF_HUB_CACHE"] = str(cache_root / "hub")
+
+    # Optional: set RESET_HF_CACHE_ON_START=1 for a one-time hard cache reset.
+    if os.environ.get("RESET_HF_CACHE_ON_START", "0") == "1":
+        hub_cache = cache_root / "hub"
+        if hub_cache.exists():
+            shutil.rmtree(hub_cache, ignore_errors=True)
+        hub_cache.mkdir(parents=True, exist_ok=True)
+
+
+_configure_hf_cache()
+
 from textSummarizer.pipeline.prediction import PredictionPipeline
 
 # ── Shared state ──────────────────────────────────────────────────────────────
@@ -20,13 +52,23 @@ _model_error: str | None = None      # non-None if load failed
 def _load_model_bg() -> None:
     """Background thread: load model and signal readiness."""
     global _pipeline, _model_error
-    try:
-        _pipeline = PredictionPipeline()
-        _pipeline.load_model()
-    except Exception as exc:
-        _model_error = str(exc)
-    finally:
-        _model_ready.set()  # always unblock waiters, even on error
+    max_attempts = int(os.environ.get("MODEL_LOAD_MAX_ATTEMPTS", "3"))
+    retry_delay_seconds = int(os.environ.get("MODEL_LOAD_RETRY_DELAY", "8"))
+
+    _model_error = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            _pipeline = PredictionPipeline()
+            _pipeline.load_model()
+            _model_error = None
+            _model_ready.set()
+            return
+        except Exception as exc:
+            _model_error = str(exc)
+            if attempt < max_attempts:
+                time.sleep(retry_delay_seconds)
+
+    _model_ready.set()  # unblock probes after final failure
 
 
 @asynccontextmanager
