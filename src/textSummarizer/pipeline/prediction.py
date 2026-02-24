@@ -1,7 +1,9 @@
 from pathlib import Path
+import tempfile
 
 from textSummarizer.config.configuration import ConfigurationManager
 from textSummarizer.logging import logger
+from huggingface_hub import snapshot_download
 from transformers import AutoTokenizer
 from transformers import AutoModelForSeq2SeqLM
 from transformers import pipeline as hf_pipeline
@@ -54,6 +56,29 @@ class PredictionPipeline:
         )
 
     # ------------------------------------------------------------------
+    def _build_pipeline_from_fresh_snapshot(self, hub_id: str):
+        """Download a clean Hub snapshot into a fresh temporary cache path
+        and load model/tokenizer from that local snapshot.
+
+        This avoids reusing a potentially corrupted existing cache entry.
+        """
+        fresh_cache_dir = Path(tempfile.mkdtemp(prefix="hf_cache_repair_"))
+        logger.warning(
+            "Downloading fresh snapshot for '%s' into %s to repair cache corruption.",
+            hub_id,
+            fresh_cache_dir,
+        )
+        snapshot_path = snapshot_download(
+            repo_id=hub_id,
+            cache_dir=str(fresh_cache_dir),
+            force_download=True,
+        )
+        return self._build_pipeline(
+            model_source=Path(snapshot_path),
+            tokenizer_source=Path(snapshot_path),
+        )
+
+    # ------------------------------------------------------------------
     def _resolve_model_source(self):
         """Return (model_source, tokenizer_source) as either absolute Path
         objects (local fine-tuned model) or Hub model-ID strings (fallback).
@@ -98,15 +123,21 @@ class PredictionPipeline:
             if not should_retry:
                 raise
 
+            hub_id = model_source
             logger.warning(
-                "Tokenizer/model cache appears corrupted (%s). Retrying with force_download=True.",
+                "Tokenizer/model cache appears corrupted (%s). Retrying from a fresh Hub snapshot.",
                 message,
             )
-            self._pipe = self._build_pipeline(
-                model_source,
-                tokenizer_source,
-                force_download=True,
-            )
+
+            try:
+                self._pipe = self._build_pipeline_from_fresh_snapshot(hub_id)
+            except Exception:
+                logger.warning("Fresh snapshot retry failed. Falling back to force_download=True.")
+                self._pipe = self._build_pipeline(
+                    model_source,
+                    tokenizer_source,
+                    force_download=True,
+                )
 
         logger.info("Model loaded and ready.")
 
