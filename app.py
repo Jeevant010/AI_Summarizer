@@ -54,21 +54,25 @@ def _load_model_bg() -> None:
     global _pipeline, _model_error
     max_attempts = int(os.environ.get("MODEL_LOAD_MAX_ATTEMPTS", "3"))
     retry_delay_seconds = int(os.environ.get("MODEL_LOAD_RETRY_DELAY", "8"))
+    recovery_retry_delay_seconds = int(os.environ.get("MODEL_RECOVERY_RETRY_DELAY", "30"))
 
     _model_error = None
-    for attempt in range(1, max_attempts + 1):
-        try:
-            _pipeline = PredictionPipeline()
-            _pipeline.load_model()
-            _model_error = None
-            _model_ready.set()
-            return
-        except Exception as exc:
-            _model_error = str(exc)
-            if attempt < max_attempts:
-                time.sleep(retry_delay_seconds)
+    while True:
+        for attempt in range(1, max_attempts + 1):
+            try:
+                _pipeline = PredictionPipeline()
+                _pipeline.load_model()
+                _model_error = None
+                _model_ready.set()
+                return
+            except Exception as exc:
+                _model_error = str(exc)
+                if attempt < max_attempts:
+                    time.sleep(retry_delay_seconds)
 
-    _model_ready.set()  # unblock probes after final failure
+        # Keep retrying in the background instead of getting stuck forever.
+        _model_ready.clear()
+        time.sleep(recovery_retry_delay_seconds)
 
 
 @asynccontextmanager
@@ -133,8 +137,11 @@ async def health_check():
     """
     if _model_error:
         return JSONResponse(
-            status_code=500,
-            content={"status": "error", "detail": _model_error},
+            status_code=503,
+            content={
+                "status": "loading",
+                "detail": f"Model recovery in progress: {_model_error}",
+            },
         )
     if not _model_ready.is_set():
         return JSONResponse(
@@ -168,7 +175,10 @@ async def predict_route(request: SummarizeRequest):
     Returns HTTP 503 while the model is still loading on first startup.
     """
     if _model_error:
-        raise HTTPException(status_code=500, detail=f"Model failed to load: {_model_error}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Model is recovering from a load failure. Please retry shortly. Last error: {_model_error}",
+        )
     if not _model_ready.is_set():
         raise HTTPException(
             status_code=503,
